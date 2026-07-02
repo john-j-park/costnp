@@ -1,0 +1,22 @@
+Package: costnp
+Title: Neyman-Pearson Cost Selection
+Version: 0.0.0.9000
+Authors@R: 
+    person("John", "Park", , "john.park8@gmail.com", role = c("aut", "cre"))
+Description: Given a cost-sensitive algorithm, outputs a cost and corresponding classifier with specific Neyman-Pearson guarantees.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    MASS,
+    e1071,
+    glmnet,
+    naivebayes,
+    randomForest
+Suggests:
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+Config/testthat/edition: 3

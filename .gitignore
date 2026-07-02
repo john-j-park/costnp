@@ -1,0 +1,18 @@
+# R project files
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+
+# macOS
+.DS_Store
+
+# Package build artifacts
+*.tar.gz
+*.Rcheck/
+docs/
+
+# Output
+output/
+/doc/
+/Meta/

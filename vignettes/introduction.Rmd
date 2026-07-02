@@ -1,0 +1,189 @@
+---
+title: "Introduction to costnp"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to costnp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(costnp)
+set.seed(1)
+```
+
+## The Neyman-Pearson framework
+
+In standard binary classification the goal is to minimize overall error. But
+many real problems are asymmetric: a false negative (missing a fraud case,
+failing to detect a disease) may be far more costly than a false positive.
+
+The **Neyman-Pearson (NP) framework** addresses this directly. Instead of
+minimizing total error, it asks:
+
+> *Find a classifier that minimizes the type II error (false negative rate)
+> subject to the type I error (false positive rate) being bounded above by
+> $\alpha$, with high probability $1 - \delta$.*
+
+`costnp` implements this via cost-sensitive learning: it searches over a grid
+of cost parameters, fits a classifier at each value, and uses a Beta
+confidence bound on the calibration set to select the cost whose classifier
+provably satisfies the NP constraint.
+
+## Setting up data
+
+The package expects data as a list with two elements:
+
+- `x` — a numeric feature matrix (observations × features)
+- `y` — an integer vector of 0/1 labels (0 = negative class, 1 = positive class)
+
+The NP guarantee controls the **type I error on class 0**, so label assignment
+matters: class 0 is the class whose false positive rate you want to bound.
+
+```{r data}
+# Class 0: N(0, I);  Class 1: N(c(1.5, 0, 0), I)
+x0 <- matrix(rnorm(200 * 3),             200, 3)
+x1 <- matrix(rnorm(200 * 3, mean = 1.5), 200, 3)
+data <- list(x = rbind(x0, x1), y = c(rep(0L, 200), rep(1L, 200)))
+table(data$y)
+
+# Population data — same distribution, larger sample
+x0p <- matrix(rnorm(5000 * 3),             5000, 3)
+x1p <- matrix(rnorm(5000 * 3, mean = 1.5), 5000, 3)
+pop_data <- list(x = rbind(x0p, x1p), y = c(rep(0L, 5000), rep(1L, 5000)))
+```
+
+## Basic usage
+
+`select_np_cost()` is the core function. The key arguments are `alpha`
+(the type I error target) and `method` (the base classifier).
+
+```{r basic}
+result <- select_np_cost(
+  data        = data,
+  population_data = pop_data,
+  alpha       = 0.1,
+  delta       = 0.1,
+  method      = "LR",
+  seed        = 42
+)
+```
+
+### Interpreting the output
+
+```{r output}
+result$cost              # selected cost parameter
+result$population_type1  # type I error on population_data
+result$population_type2  # type II error on population_data
+result$n_calib           # calibration set size used
+result$m_errors_in_calib # class-0 errors on calibration set
+```
+
+The guarantee is: with probability at least $1 - \delta = 0.9$, the
+population type I error is at most $\alpha = 0.1$. The tradeoff is that
+a tighter type I bound generally increases the type II error.
+
+## `costnp` vs `costnp_plus`
+
+The package provides two named wrappers that differ in how the final cost is
+chosen once the algorithm finds the boundary between under- and
+over-estimating the target:
+
+- **`costnp()`** snaps to the last grid point that still satisfies the
+  bound — the more conservative choice.
+- **`costnp_plus()`** linearly interpolates between the last under-estimate and
+  first over-estimate — slightly less conservative, potentially lower type II
+  error.
+
+```{r compare}
+r_strict <- costnp(data, pop_data, method = "LR", seed = 42)
+r_interp <- costnp_plus(data,   pop_data, method = "LR", seed = 42)
+
+data.frame(
+  method     = c("costnp", "costnp_plus"),
+  cost       = c(r_strict$cost, r_interp$cost),
+  type1_pop  = c(r_strict$population_type1, r_interp$population_type1),
+  type2_pop  = c(r_strict$population_type2, r_interp$population_type2)
+)
+```
+
+In practice the difference is small — typically one grid step — but `costnp_plus`
+is preferable when minimising type II error is important and the slight
+reduction in conservativeness is acceptable.
+
+## Switching classifiers
+
+The `method` argument selects the base classifier. All methods listed below
+use stratified resampling (the default `classify_fun`) to inject the
+cost-sensitivity:
+
+| `method`   | Classifier              | Package       |
+|------------|-------------------------|---------------|
+| `"LR"`     | Logistic regression     | base R        |
+| `"penLR"`  | Lasso logistic          | glmnet        |
+| `"ridgeLR"`| Ridge logistic          | glmnet        |
+| `"RF"`     | Random forest           | randomForest  |
+| `"NB"`     | Naive Bayes             | naivebayes    |
+| `"LDA"`    | Linear discriminant     | MASS          |
+| `"SVM"`    | Support vector machine  | e1071         |
+
+```{r methods, eval = FALSE}
+r_rf <- select_np_cost(data, pop_data, method = "RF", seed = 42)
+r_lda <- select_np_cost(data, pop_data, method = "LDA", seed = 42)
+```
+
+## Threshold sweep instead of resampling
+
+An alternative to resampling is to fit a single unweighted classifier and
+sweep the decision threshold. Use `classify_fun_threshold` paired with
+`threshold_fun = function(cost) cost`:
+
+```{r threshold}
+r_thresh <- select_np_cost(
+  data            = data,
+  population_data = pop_data,
+  method          = "LR",
+  classify_fun   = classify_fun_threshold,
+  threshold_fun  = function(cost) cost,
+  cost_start     = 0.99,
+  cost_end       = 0.50,
+  seed           = 42
+)
+r_thresh$cost            # now interpreted as a decision threshold
+r_thresh$population_type1
+```
+
+## Custom classifiers
+
+If none of the built-in methods fit your needs, you can supply your own
+`classify_fun`. It must have the signature:
+
+```r
+function(xtrain, ytrain, cost, xnew, method = NULL, ...)
+```
+
+and return `list(prob, obj)` where `prob` is a numeric vector of predicted
+probabilities for `xnew` and `obj` is the fitted model. When using a custom
+`classify_fun`, `method` can be left as `NULL`.
+
+```{r custom, eval = FALSE}
+my_classifier <- function(xtrain, ytrain, cost, xnew, method = NULL, ...) {
+  # example: weight observations by cost
+  w <- ifelse(ytrain == 0, cost, 1 - cost)
+  df <- data.frame(y = ytrain, xtrain)
+  fit <- glm(y ~ ., data = df, family = binomial(), weights = w)
+  prob <- predict(fit, newdata = data.frame(xnew), type = "response")
+  list(prob = prob, obj = fit)
+}
+
+r_custom <- select_np_cost(
+  data            = data,
+  population_data = pop_data,
+  classify_fun    = my_classifier,
+  seed          = 42
+)
+```

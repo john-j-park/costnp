@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Introduction to costnp</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to costnp</h1>
+
+
+
+<div id="the-neyman-pearson-framework" class="section level2">
+<h2>The Neyman-Pearson framework</h2>
+<p>In standard binary classification the goal is to minimize overall
+error. But many real problems are asymmetric: a false negative (missing
+a fraud case, failing to detect a disease) may be far more costly than a
+false positive.</p>
+<p>The <strong>Neyman-Pearson (NP) framework</strong> addresses this
+directly. Instead of minimizing total error, it asks:</p>
+<blockquote>
+<p><em>Find a classifier that minimizes the type II error (false
+negative rate) subject to the type I error (false positive rate) being
+bounded above by <span class="math inline">\(\alpha\)</span>, with high
+probability <span class="math inline">\(1 - \delta\)</span>.</em></p>
+</blockquote>
+<p><code>costnp</code> implements this via cost-sensitive learning: it
+searches over a grid of cost parameters, fits a classifier at each
+value, and uses a Beta confidence bound on the calibration set to select
+the cost whose classifier provably satisfies the NP constraint.</p>
+</div>
+<div id="setting-up-data" class="section level2">
+<h2>Setting up data</h2>
+<p>The package expects data as a list with two elements:</p>
+<ul>
+<li><code>x</code> — a numeric feature matrix (observations ×
+features)</li>
+<li><code>y</code> — an integer vector of 0/1 labels (0 = negative
+class, 1 = positive class)</li>
+</ul>
+<p>The NP guarantee controls the <strong>type I error on class
+0</strong>, so label assignment matters: class 0 is the class whose
+false positive rate you want to bound.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Class 0: N(0, I);  Class 1: N(c(1.5, 0, 0), I)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>x0 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">200</span> <span class="sc">*</span> <span class="dv">3</span>),             <span class="dv">200</span>, <span class="dv">3</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>x1 <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">200</span> <span class="sc">*</span> <span class="dv">3</span>, <span class="at">mean =</span> <span class="fl">1.5</span>), <span class="dv">200</span>, <span class="dv">3</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">x =</span> <span class="fu">rbind</span>(x0, x1), <span class="at">y =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span><span class="dt">L</span>, <span class="dv">200</span>), <span class="fu">rep</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">200</span>)))</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">table</span>(data<span class="sc">$</span>y)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="co">#&gt;   0   1 </span></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="co">#&gt; 200 200</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="co"># Population data — same distribution, larger sample</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>x0p <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">5000</span> <span class="sc">*</span> <span class="dv">3</span>),             <span class="dv">5000</span>, <span class="dv">3</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>x1p <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(<span class="dv">5000</span> <span class="sc">*</span> <span class="dv">3</span>, <span class="at">mean =</span> <span class="fl">1.5</span>), <span class="dv">5000</span>, <span class="dv">3</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>pop_data <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">x =</span> <span class="fu">rbind</span>(x0p, x1p), <span class="at">y =</span> <span class="fu">c</span>(<span class="fu">rep</span>(<span class="dv">0</span><span class="dt">L</span>, <span class="dv">5000</span>), <span class="fu">rep</span>(<span class="dv">1</span><span class="dt">L</span>, <span class="dv">5000</span>)))</span></code></pre></div>
+</div>
+<div id="basic-usage" class="section level2">
+<h2>Basic usage</h2>
+<p><code>select_np_cost()</code> is the core function. The key arguments
+are <code>alpha</code> (the type I error target) and <code>method</code>
+(the base classifier).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">select_np_cost</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">data        =</span> data,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">population_data =</span> pop_data,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">alpha       =</span> <span class="fl">0.1</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">delta       =</span> <span class="fl">0.1</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">method      =</span> <span class="st">&quot;LR&quot;</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">seed        =</span> <span class="dv">42</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>)</span></code></pre></div>
+<div id="interpreting-the-output" class="section level3">
+<h3>Interpreting the output</h3>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>result<span class="sc">$</span>cost              <span class="co"># selected cost parameter</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.82</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>result<span class="sc">$</span>population_type1  <span class="co"># type I error on population_data</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.0366</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>result<span class="sc">$</span>population_type2  <span class="co"># type II error on population_data</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; [1] 0.1992</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>result<span class="sc">$</span>n_calib           <span class="co"># calibration set size used</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; [1] 100</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>result<span class="sc">$</span>m_errors_in_calib <span class="co"># class-0 errors on calibration set</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; [1] 5</span></span></code></pre></div>
+<p>The guarantee is: with probability at least <span class="math inline">\(1 - \delta = 0.9\)</span>, the population type I
+error is at most <span class="math inline">\(\alpha = 0.1\)</span>. The
+tradeoff is that a tighter type I bound generally increases the type II
+error.</p>
+</div>
+</div>
+<div id="costnp-vs-costnp_plus" class="section level2">
+<h2><code>costnp</code> vs <code>costnp_plus</code></h2>
+<p>The package provides two named wrappers that differ in how the final
+cost is chosen once the algorithm finds the boundary between under- and
+over-estimating the target:</p>
+<ul>
+<li><strong><code>costnp()</code></strong> snaps to the last grid point
+that still satisfies the bound — the more conservative choice.</li>
+<li><strong><code>costnp_plus()</code></strong> linearly interpolates
+between the last under-estimate and first over-estimate — slightly less
+conservative, potentially lower type II error.</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>r_strict <span class="ot">&lt;-</span> <span class="fu">costnp</span>(data, pop_data, <span class="at">method =</span> <span class="st">&quot;LR&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>r_interp <span class="ot">&lt;-</span> <span class="fu">costnp_plus</span>(data,   pop_data, <span class="at">method =</span> <span class="st">&quot;LR&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">method     =</span> <span class="fu">c</span>(<span class="st">&quot;costnp&quot;</span>, <span class="st">&quot;costnp_plus&quot;</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">cost       =</span> <span class="fu">c</span>(r_strict<span class="sc">$</span>cost, r_interp<span class="sc">$</span>cost),</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">type1_pop  =</span> <span class="fu">c</span>(r_strict<span class="sc">$</span>population_type1, r_interp<span class="sc">$</span>population_type1),</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="at">type2_pop  =</span> <span class="fu">c</span>(r_strict<span class="sc">$</span>population_type2, r_interp<span class="sc">$</span>population_type2)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;        method      cost type1_pop type2_pop</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt; 1      costnp 0.8200000    0.0366    0.1992</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 2 costnp_plus 0.8124155    0.0390    0.1908</span></span></code></pre></div>
+<p>In practice the difference is small — typically one grid step — but
+<code>costnp_plus</code> is preferable when minimising type II error is
+important and the slight reduction in conservativeness is
+acceptable.</p>
+</div>
+<div id="switching-classifiers" class="section level2">
+<h2>Switching classifiers</h2>
+<p>The <code>method</code> argument selects the base classifier. All
+methods listed below use stratified resampling (the default
+<code>classify_fun</code>) to inject the cost-sensitivity:</p>
+<table>
+<thead>
+<tr>
+<th><code>method</code></th>
+<th>Classifier</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;LR&quot;</code></td>
+<td>Logistic regression</td>
+<td>base R</td>
+</tr>
+<tr>
+<td><code>&quot;penLR&quot;</code></td>
+<td>Lasso logistic</td>
+<td>glmnet</td>
+</tr>
+<tr>
+<td><code>&quot;ridgeLR&quot;</code></td>
+<td>Ridge logistic</td>
+<td>glmnet</td>
+</tr>
+<tr>
+<td><code>&quot;RF&quot;</code></td>
+<td>Random forest</td>
+<td>randomForest</td>
+</tr>
+<tr>
+<td><code>&quot;GB&quot;</code></td>
+<td>Gradient boosting</td>
+<td>xgboost</td>
+</tr>
+<tr>
+<td><code>&quot;NB&quot;</code></td>
+<td>Naive Bayes</td>
+<td>naivebayes</td>
+</tr>
+<tr>
+<td><code>&quot;LDA&quot;</code></td>
+<td>Linear discriminant</td>
+<td>MASS</td>
+</tr>
+<tr>
+<td><code>&quot;SVM&quot;</code></td>
+<td>Support vector machine</td>
+<td>e1071</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>r_rf <span class="ot">&lt;-</span> <span class="fu">select_np_cost</span>(data, pop_data, <span class="at">method =</span> <span class="st">&quot;RF&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>r_lda <span class="ot">&lt;-</span> <span class="fu">select_np_cost</span>(data, pop_data, <span class="at">method =</span> <span class="st">&quot;LDA&quot;</span>, <span class="at">seed =</span> <span class="dv">42</span>)</span></code></pre></div>
+</div>
+<div id="threshold-sweep-instead-of-resampling" class="section level2">
+<h2>Threshold sweep instead of resampling</h2>
+<p>An alternative to resampling is to fit a single unweighted classifier
+and sweep the decision threshold. Use
+<code>classify_fun_threshold</code> paired with
+<code>threshold_fun = function(cost) cost</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>r_thresh <span class="ot">&lt;-</span> <span class="fu">select_np_cost</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">data            =</span> data,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">population_data =</span> pop_data,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">method          =</span> <span class="st">&quot;LR&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">classify_fun   =</span> classify_fun_threshold,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">threshold_fun  =</span> <span class="cf">function</span>(cost) cost,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">cost_start     =</span> <span class="fl">0.99</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">cost_end       =</span> <span class="fl">0.50</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">seed           =</span> <span class="dv">42</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>)</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>r_thresh<span class="sc">$</span>cost            <span class="co"># now interpreted as a decision threshold</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; [1] 0.89</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>r_thresh<span class="sc">$</span>population_type1</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; [1] 0.0386</span></span></code></pre></div>
+</div>
+<div id="custom-classifiers" class="section level2">
+<h2>Custom classifiers</h2>
+<p>If none of the built-in methods fit your needs, you can supply your
+own <code>classify_fun</code>. It must have the signature:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="cf">function</span>(xtrain, ytrain, cost, xnew, <span class="at">method =</span> <span class="cn">NULL</span>, ...)</span></code></pre></div>
+<p>and return <code>list(prob, obj)</code> where <code>prob</code> is a
+numeric vector of predicted probabilities for <code>xnew</code> and
+<code>obj</code> is the fitted model. When using a custom
+<code>classify_fun</code>, <code>method</code> can be left as
+<code>NULL</code>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>my_classifier <span class="ot">&lt;-</span> <span class="cf">function</span>(xtrain, ytrain, cost, xnew, <span class="at">method =</span> <span class="cn">NULL</span>, ...) {</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="co"># example: weight observations by cost</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  w <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(ytrain <span class="sc">==</span> <span class="dv">0</span>, cost, <span class="dv">1</span> <span class="sc">-</span> cost)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">y =</span> ytrain, xtrain)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">glm</span>(y <span class="sc">~</span> ., <span class="at">data =</span> df, <span class="at">family =</span> <span class="fu">binomial</span>(), <span class="at">weights =</span> w)</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  prob <span class="ot">&lt;-</span> <span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">data.frame</span>(xnew), <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">prob =</span> prob, <span class="at">obj =</span> fit)</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>}</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>r_custom <span class="ot">&lt;-</span> <span class="fu">select_np_cost</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">data            =</span> data,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">population_data =</span> pop_data,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">classify_fun    =</span> my_classifier,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">seed          =</span> <span class="dv">42</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
